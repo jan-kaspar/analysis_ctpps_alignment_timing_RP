@@ -1,0 +1,60 @@
+#!/bin/bash
+
+top_dir="../data/phys"
+
+eos_dir="/eos/totem/data/ctpps/reconstruction/2017/postTS2_alignment_data/version4-timing"
+
+buffer=""
+for f in `eos ls "$eos_dir"|grep ".root"`
+do
+	tag=${f%.*}
+	tag=${tag%_*}
+
+	fill=${tag%%_*}
+	fill=${fill#fill}
+
+	tag=${tag#*_}
+	xangle=${tag%%_*}
+	xangle=${xangle#xangle}	
+
+	tag=${tag#*_}
+	stream=${tag%%_*}
+	
+	tag="$fill,$stream"
+
+	buffer="$buffer $tag"
+done
+
+for base in `echo "$buffer" | tr ' ' '\n' | sort -u`
+do
+	fill=${base%%,*}
+
+	base=${base#*,}
+	stream=${base%%,*}
+	
+	echo "* fill $fill, stream $stream"
+
+	# make work directory
+	dir="$top_dir/fill_$fill/$stream/"
+	mkdir -p "$dir"
+
+	# make config with input files
+	(
+		echo "import FWCore.ParameterSet.Config as cms"
+		echo ""
+		echo "input_files = cms.vstring("
+
+		for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep "_${stream}" | grep ".root"`
+		do
+			echo "    \"root://eostotem.cern.ch/${eos_dir}/${f}\","
+		done
+
+		echo ")"
+	) > "$dir/input_files.py"
+
+	# if not present, make (default) config
+	if [ ! -f "$dir/config.py" ]
+	then
+		cp "config_template.py" "$dir/config.py"
+	fi
+done

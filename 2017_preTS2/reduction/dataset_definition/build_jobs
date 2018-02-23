@@ -1,0 +1,237 @@
+#!/bin/bash
+
+streams=(
+	"SingleMuon"
+#	"DoubleEG"
+#	"ZeroBias"
+)
+
+dataset_exts=(
+	"Run2017B-17Nov2017-v1/AOD"
+	"Run2017C-17Nov2017-v1/AOD"
+	"Run2017D-17Nov2017-v1/AOD"
+)
+
+files_per_block="50"
+
+template_file="job_template.py"
+check_template_file="CheckRootFile_template"
+
+config_file="cfg.py"
+log_file="log"
+job_log_file="job_log"
+check_file="CheckRootFile.cc"
+finished_file="finished"
+success_file="success"
+
+#----------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------
+
+function MakeConfig()
+{
+	(
+		echo "#!/bin/sh"
+		echo "export HOME=\"/afs/cern.ch/exp/totem/scratch/jkaspar\""
+		echo ""
+		echo "source \"/cvmfs/cms.cern.ch/cmsset_default.sh\""
+		echo "cd \"$CMSSW_BASE\""
+		echo "cmsenv"
+		echo "cd \"$execute_dir\""
+		echo ""
+		cat "common_job_code"
+		echo ""
+		echo "("
+		echo ""
+		echo "date"
+		echo ""
+		echo "voms-proxy-info"
+		echo ""
+		echo "# prepare directory for reco"
+		echo "mkdir -p \"$reco_dir\""
+		echo ""
+		echo "# run CMSSW"
+		echo "cmsRun \"$config_file\" > \"$log_file\""
+		echo "cmsRun_retCode=\$?"
+		echo "if [ \$cmsRun_retCode -ne 0 ]"
+		echo "then"
+		echo "    echo \"cmsRun crashed: return code = \$cmsRun_retCode\""
+		echo "    ls -l > \"$finished_file\""
+		echo "    exit 1"
+		echo "fi"
+		echo ""
+		echo "date"
+		echo ""
+		echo "# check ROOT file consistency"
+		echo "root -b -q -l \"$check_file\" 2> /dev/null"
+		echo "if [ \$? -eq 0 ]"
+		echo "then"
+		echo "    # workaround for problems with eos cp"
+		echo "    export LD_LIBRARY_PATH=\"\""
+		echo "    "
+		echo "    success=1"
+		echo "    outputDir=\"$storage_dir\""
+		echo "    RemoteMkdir \"\$outputDir\""
+    	echo "    SafeCmd RemoteCopy \"$config_file\" \"\$outputDir/${output_tag}_cfg.py\" || success=0"
+    	echo "    SafeCmd RemoteCopy \"$log_file\" \"\$outputDir/${output_tag}.log\" || success=0"
+    	echo "    SafeCmd RemoteCopy \"run_ls_selection.json\" \"\$outputDir/${output_tag}.json\" || success=0"
+    	echo "    SafeCmd RemoteCopy \"$output_file\" \"\$outputDir/${output_tag}.root\" || success=0"
+		echo "    if [ \$success -eq 1 ]"
+		echo "    then"
+		echo "        touch \"$success_file\""
+		echo "    fi"
+		echo "else"
+		echo "    echo \"The reco file is corrupted, you will need to rerun this job.\""
+		echo "fi"
+		echo ""
+		echo "ls -l > \"$finished_file\""
+		echo ""
+		echo ") &> $job_log_file"
+	) > "$dir_out/job"
+
+	chmod u+x "$dir_out/job"
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function MakeScript()
+{
+	cat "$template_file" | sed -e "\
+			s|\$input_file_commands|$input_file_commands|;\
+			s|\$output_file|$output_file|;\
+		" > "$dir_out/$config_file"
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function MakeCheckScript()
+{
+    cat "$check_template_file" | sed "\
+        s|\$file|$output_file|;\
+      " > "$dir_out/$check_file"
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function GetRunList()
+{
+	runs=""
+
+	for run in `cat "$f_in" | grep -Po '".*?"' | sed 's/"//g'`
+	do
+		if [ -n "$runs" ]
+		then
+			runs="$runs,"
+		fi
+
+		runs="$runs$run"
+	done
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function ProcessOneBlock()
+{
+	dir_out="../work_dir/fill$fill/xangle$xangle/$stream/block$block_idx"
+
+	# make output directory
+	mkdir -p "$dir_out"
+
+	# set directories, filenames, etc.
+	execute_dir="`pwd -P`/$dir_out"
+	reco_dir="/pool"
+
+	storage_dir="/eos/totem/data/ctpps/reconstruction/2017/preTS2_alignment_data/version2-timing"
+
+	output_tag="fill${fill}_xangle${xangle}_${stream}_block${block_idx}"
+	output_file="$reco_dir/$output_tag.root"
+
+	# copy JSON selection
+	cp "$f_in" "$dir_out/run_ls_selection.json"
+
+	# process input files
+	input_file_commands=""
+	for file in $buffer
+	do
+        input_file_commands="${input_file_commands}process.source.fileNames.append(\"$file\")\n"
+	done
+
+	# make config
+	MakeConfig
+
+	# make job script
+	MakeScript
+
+	# make check script
+	MakeCheckScript
+}
+
+#----------------------------------------------------------------------------------------------------
+
+function ProcessOneStream()
+{
+	# reset
+	buffer=""
+	buffer_size="0"
+	block_idx="0"
+
+	# process all extensions
+	for ext in ${dataset_exts[*]}
+	do
+		for file in `dasgoclient --query "file dataset=/$stream/$ext run in [$runs]"`
+		do
+			buffer="$buffer $file"
+			let buffer_size+=1
+		
+			if [ "$buffer_size" -ge "$files_per_block" ]
+			then
+				ProcessOneBlock
+		
+				buffer=""
+				let buffer_size=0
+				let block_idx+=1
+			fi
+		done
+	done
+
+	if [ "$buffer_size" -gt "0" ]
+	then
+		ProcessOneBlock
+	
+		buffer=""
+		let buffer_size=0
+		let block_idx+=1
+	fi
+}
+
+#----------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------
+
+for f_in in per_fill_selected/*
+do
+	size=$(wc -c <"$f_in")
+
+	if [ "$size" -le 3 ]
+	then
+		continue
+	fi
+
+	echo "* $f_in"
+
+	tag=${f_in#*/}
+	tag=${tag%.*}
+
+	fill=${tag%_*}
+	fill=${fill#fill}
+
+	xangle=${tag#*_}
+	xangle=${xangle#xangle}
+
+	# get list of runs
+	GetRunList
+
+	# process all streams
+	for stream in ${streams[*]}
+	do
+		ProcessOneStream
+	done
+done
