@@ -10,15 +10,28 @@ rp_sectors.push("sector 56"); rp_labels.push("sector_56");
 int planes[] = { 0, 1, 2, 3 };
 
 int channels[];
-channels.push(10);
-channels.push(11);
 
+// piece 1
+channels.push(0);
+channels.push(11);
+channels.push(1);
+channels.push(10);
+
+// piece 1 or 2
+channels.push(2);
+
+// piece 2
+channels.push(9);
 channels.push(3);
 channels.push(8);
+channels.push(4);
 
+// piece 3
 channels.push(7);
 
-//channels.push(6);
+// piece 3 or 4
+channels.push(5);
+channels.push(6);
 
 string dir = "data/phys/fill_6288/SingleMuon";
 
@@ -34,17 +47,14 @@ for (int rpi : rp_sectors.keys)
 
 	for (int plane : planes)
 	{
-		NewPad(false);
-		label(format("plane %u", plane));
+		NewPadLabel(format("plane %u", plane));
 	}
-
 
 	for (int chi : channels.keys)
 	{
 		NewRow();
 
-		NewPad(false);
-		label(format("channel %u", channels[chi]));
+		NewPadLabel(format("channel %u", channels[chi]));
 
 		for (int plane : planes)
 		{
