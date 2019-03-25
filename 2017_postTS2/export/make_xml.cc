@@ -168,7 +168,7 @@ int main()
 				const unsigned int rp = p.first.rpDecId % 10;
 				CTPPSDiamondDetId detId(arm, st, rp, p.first.plane, ch);
 
-				printf("      <!-- channel %2u --> <det id=\"%u\" sh_x=\"%+8.1f\" sh_x_unc=\"%+8.1f\"/>\n", ch, detId.rawId(), -corr*1E3, corr_unc*1E3);
+				printf("      <!-- channel %2u --> <det id=\"%u\" sh_x=\"%+8.1f\" sh_x_e=\"%+8.1f\"/>\n", ch, detId.rawId(), -corr*1E3, corr_unc*1E3);
 			}
 		}
 	}
