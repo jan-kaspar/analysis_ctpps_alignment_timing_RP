@@ -176,10 +176,12 @@ unsigned int SectorData::Process(const vector<CTPPSLocalTrackLite> &tracks, cons
 		}
 
 		// apply alignment corrections
-		x += cfg.alignment_corrections_x[rpDecId];
+		if (!cfg.aligned)
+			x += cfg.alignment_corrections_x[rpDecId];
 
 		// re-build track object
-		CTPPSLocalTrackLite tr_corr(tr.getRPId(), x, 0., y, 0.);
+		CTPPSLocalTrackLite tr_corr(tr.getRPId(), x, 0., y, 0.,
+			0., 0., 0., 0., 0., (CTPPSpixelLocalTrackReconstructionInfo)0, 0, 0., 0.);
 
 		// store corrected track into the right collection
 		if (rpDecId == rpIdUp)
