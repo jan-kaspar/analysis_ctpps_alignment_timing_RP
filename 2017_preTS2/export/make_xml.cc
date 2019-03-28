@@ -147,6 +147,9 @@ int main()
 	for (const auto &dir : dirs)
 		f_ins.push_back(TFile::Open(("../" + dir + "/distributions.root").c_str()));
 
+	// open output files
+	TFile *f_out = TFile::Open("fits.root", "recreate");
+
 	// print header
 	printf("<xml DocumentType=\"AlignmentDescription\">\n");
 	printf("  <iov first=\"294730:0\" last=\"302664:0\">\n"); // 2017, pre-TS2
@@ -169,6 +172,13 @@ int main()
 				CTPPSDiamondDetId detId(arm, st, rp, p.first.plane, ch);
 
 				printf("      <!-- channel %2u --> <det id=\"%u\" sh_x=\"%+8.1f\" sh_x_e=\"%+8.1f\"/>\n", ch, detId.rawId(), -corr*1E3, corr_unc*1E3);
+
+				gDirectory = f_out;
+				TGraph *g = new TGraph();
+				g->SetPoint(0, corr, corr_unc);
+				char buf[100];
+				sprintf(buf, "%s_%u_%u", p.first.sector.c_str(), p.first.plane, ch);
+				g->Write(buf);
 			}
 		}
 	}
@@ -176,6 +186,9 @@ int main()
 	// print footer
 	printf("  </iov>\n");
 	printf("</xml>\n");
+
+	// cleanup
+	delete f_out;
 
 	return 0;
 }

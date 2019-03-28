@@ -86,7 +86,10 @@ int main()
 {
 	// select input data
 	vector<string> dirs = {
+		"data/phys/fill_6860/ZeroBias",
+		"data/phys/fill_7045/ZeroBias",
 		"data/phys/fill_7137/ZeroBias",
+		"data/phys/fill_7320/ZeroBias",
 	};
 
 	// define channels to use: map: sector, plane, piece --> list of channels
@@ -107,6 +110,7 @@ int main()
 		{ 3, {5, 6}, {5} },
 	};
 
+	/*
 	mapping[{"sector 45", 16, 2}] = {
 		{ 0, {0, 11, 1, 10}, {11, 10} },
 		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
@@ -120,7 +124,19 @@ int main()
 		{ 2, {4, 7}, {4, 7} },
 		{ 3, {5, 6}, {5} },
 	};
-
+	*/
+	
+	// empirical mapping
+	mapping[{"sector 45", 16, 2}] = mapping[{"sector 45", 16, 3}] = {
+		{ 0, {0, 11, 1, 10}, {0, 11, 1, 10} },
+		{ 2, {2}, {2} },
+		{ 3, {3}, {3} },
+		{ 4, {4}, {4} },
+		{ 5, {5, 6}, {5} },
+		{ 7, {7}, {7} },
+		{ 8, {8}, {8} },
+		{ 9, {9}, {9} },
+	};
 
 	mapping[{"sector 56", 116, 0}] = {
 		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
@@ -136,6 +152,7 @@ int main()
 		{ 3, {5, 6}, {7} },	// crude approximation
 	};
 
+	/*
 	mapping[{"sector 56", 116, 2}] = {
 		{ 0, {0, 11, 1, 10}, {0, 11, 10} },
 		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
@@ -149,12 +166,26 @@ int main()
 		{ 2, {4, 7}, {4, 7} },
 		{ 3, {5, 6}, {7} }, // crude approximation
 	};
+	*/
 
+	// empirical mapping
+	mapping[{"sector 56", 116, 2}] = mapping[{"sector 56", 116, 3}] = {
+		{ 0, {0, 11, 1, 10}, {0, 11, 1, 10} },
+		{ 2, {2}, {2} },
+		{ 3, {3}, {3} },
+		{ 4, {4, 7}, {4, 7} },
+		{ 5, {5, 6}, {7} }, // crude approximation
+		{ 8, {8}, {8} },
+		{ 9, {9}, {9} },
+	};
 
 	// open input files
 	vector<TFile *> f_ins;
 	for (const auto &dir : dirs)
 		f_ins.push_back(TFile::Open(("../" + dir + "/distributions.root").c_str()));
+
+	// open output files
+	TFile *f_out = TFile::Open("fits.root", "recreate");
 
 	// print header
 	printf("<xml DocumentType=\"AlignmentDescription\">\n");
@@ -178,6 +209,13 @@ int main()
 				CTPPSDiamondDetId detId(arm, st, rp, p.first.plane, ch);
 
 				printf("      <!-- channel %2u --> <det id=\"%u\" sh_x=\"%+8.1f\" sh_x_e=\"%+8.1f\"/>\n", ch, detId.rawId(), -corr*1E3, corr_unc*1E3);
+
+				gDirectory = f_out;
+				TGraph *g = new TGraph();
+				g->SetPoint(0, corr, corr_unc);
+				char buf[100];
+				sprintf(buf, "%s_%u_%u", p.first.sector.c_str(), p.first.plane, ch);
+				g->Write(buf);
 			}
 		}
 	}
@@ -185,6 +223,9 @@ int main()
 	// print footer
 	printf("  </iov>\n");
 	printf("</xml>\n");
+
+	// cleanup
+	delete f_out;
 
 	return 0;
 }
