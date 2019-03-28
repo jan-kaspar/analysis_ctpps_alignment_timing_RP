@@ -1,21 +1,31 @@
 #!/bin/bash
 
 top_dir="../data/phys"
+eos_dir="/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version1"
 
-eos_dir="/eos/totem/data/ctpps/reconstruction/2017/preTS2_alignment_data/version2-timing"
+#top_dir="../data/phys-check"
+#eos_dir="/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version3"
 
 buffer=""
 for f in `eos ls "$eos_dir"|grep ".root"`
 do
 	tag=${f%.*}
-	tag=${tag%_*}
 
 	fill=${tag%%_*}
 	fill=${fill#fill}
 
+	if [ $fill -gt 6200 ]
+	then
+		continue
+	fi
+
 	tag=${tag#*_}
 	xangle=${tag%%_*}
 	xangle=${xangle#xangle}	
+
+	tag=${tag#*_}
+	beta=${tag%%_*}
+	beta=${beta#beta}
 
 	tag=${tag#*_}
 	stream=${tag%%_*}

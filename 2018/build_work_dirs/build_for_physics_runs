@@ -1,8 +1,10 @@
 #!/bin/bash
 
 top_dir="../data/phys"
-
 eos_dir="/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version1"
+
+#top_dir="../data/phys-check"
+#eos_dir="/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version2"
 
 buffer=""
 for f in `eos ls "$eos_dir"|grep ".root"`
