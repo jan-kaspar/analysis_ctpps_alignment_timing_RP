@@ -4,7 +4,9 @@
 *.pdf
 *.log
 *.pyc
+*.xml
 
 data
+reduction
 
 distributions
