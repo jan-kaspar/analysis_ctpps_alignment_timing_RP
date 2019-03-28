@@ -18,15 +18,15 @@ channels.push(3); ch_pens.push(red);
 channels.push(8); ch_pens.push(magenta);
 
 channels.push(7); ch_pens.push(heavygreen);
-channels.push(5); ch_pens.push(green);
+channels.push(4); ch_pens.push(green);
 
-channels.push(6); ch_pens.push(black);
+channels.push(2); ch_pens.push(black);
 
 real amp = 0.4;
 
-string dir = "data/phys/fill_7137/ZeroBias";
+string dir = "data/phys/fill_7320/ZeroBias";
 
-yTicksDef = RightTicks(0.5, 0.1);
+yTicksDef = RightTicks(1., 0.5);
 //yTicksDef = RightTicks(0.1, 0.05);
 
 //----------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ string f = topDir + dir + "/distributions.root";
 
 for (int rpi : rp_sectors.keys)
 {
-	NewPad("plane");
+	NewPad("plane", "horizontal shift correction$\ung{mm}$");
 
 	for (int plane : planes)
 	{
@@ -63,9 +63,9 @@ for (int rpi : rp_sectors.keys)
 		}
 	}
 
-	limits((-1, -3.0), (4, +3.0), Crop);
+	limits((-1, -3.0), (4, +10.0), Crop);
 
-	AttachLegend(rp_labels[rpi]);
+	AttachLegend(rp_labels[rpi], S, N);
 }
 
 //----------------------------------------------------------------------------------------------------

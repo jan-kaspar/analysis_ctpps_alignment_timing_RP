@@ -55,25 +55,30 @@ for (int rpi : rp_sectors.keys)
 			NewPad("$x_{\rm timing} - x_{\rm tracker}\ung{mm}$");
 			scale(Linear, Linear(true));
 
-			string obj_base_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", channels[chi]) + "/c_analysis";
+			string obj_base_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", channels[chi]) + "/";
 
-			if (! RootGetObject(f, obj_base_path, error=false).valid)
+			RootObject h_x = RootGetObject(f, obj_base_path + "c_analysis|h_x_res", error=false);
+			RootObject g_crossing = RootGetObject(f, obj_base_path + "c_analysis|g_crossing_1", error=false);
+			RootObject obj_res = RootGetObject(f, obj_base_path + "g_results", error=false);
+			RootObject h_w = RootGetObject(f, obj_base_path + "h_w", error=false);
+
+			if (! h_x.valid)
 				continue;
 
 			TH1_x_min = -5;
 			TH1_x_max = +15;
 
-			draw(RootGetObject(f, obj_base_path + "|h_x_res"), "vl", red);
-			draw(RootGetObject(f, obj_base_path + "|g_crossing_1"), "l", blue+1pt);
-
-			string obj_res_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", channels[chi]) + "/g_results";
-			RootObject obj_res = RootGetObject(f, obj_res_path);
+			draw(h_x, "vl", red);
+			draw(g_crossing, "l", blue+1pt);
 
 			real ax[] = {0.};
 			real ay[] = {0.};
 
 			obj_res.vExec("GetPoint", 0, ax, ay); real corr = ay[0];
 			obj_res.vExec("GetPoint", 1, ax, ay); real corr_unc = ay[0];
+			obj_res.vExec("GetPoint", 2, ax, ay); real width_obs = ay[0];
+
+			real width_exp = h_w.rExec("GetMean");
 
 			/*
 			if (channels[chi] == 7)
@@ -88,7 +93,10 @@ for (int rpi : rp_sectors.keys)
 
 			yaxis(XEquals(corr, false), heavygreen+2pt);
 
-			AttachLegend(format("%#.3f", corr));
+			AddToLegend(format("<mean (obs.) = %#.3f", corr));
+			AddToLegend(format("<width (obs.) = %#.3f", width_obs));
+			AddToLegend(format("<width (exp.) = %#.3f", width_exp));
+			AttachLegend();
 		}
 	}
 
