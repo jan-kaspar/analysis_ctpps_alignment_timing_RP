@@ -86,6 +86,9 @@ struct SectorData
 	// residua distributions
 	map<unsigned int, map<unsigned int, TH1D*> > m_h_x_res;
 
+	// width distributions
+	map<unsigned int, map<unsigned int, TH1D*> > m_h_w;
+
 	SectorData(const string _name, unsigned int _rpIdUp, unsigned int _rpIdDw, unsigned int _rpIdTi, const SectorConfig &_scfg);
 
 	unsigned int Process(const vector<CTPPSLocalTrackLite> &tracks, const DetSetVector<CTPPSDiamondRecHit> &diamondHits);
@@ -94,7 +97,7 @@ struct SectorData
 
 	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const;
 
-	void Write() const;
+	void Write();
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -139,8 +142,13 @@ SectorData::SectorData(const string _name, unsigned int _rpIdUp, unsigned int _r
 
 	// residua histograms
 	for (unsigned int pl = 0; pl < 4; ++pl)
+	{
 		for (unsigned int ch = 0; ch < 12; ++ch)
-			m_h_x_res[pl][ch] = new TH1D("", ";x_res", 1200., -7., +5.);
+		{
+			m_h_x_res[pl][ch] = new TH1D("", ";x_res", 2500., -10., +15.);
+			m_h_w[pl][ch] = new TH1D("", ";x_res", 1000., 0., +10.);
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -275,6 +283,7 @@ unsigned int SectorData::Process(const vector<CTPPSLocalTrackLite> &tracks, cons
 				{
 					double x_res = hit.getX() - x_ti;
 					m_h_x_res[plane][channel]->Fill(x_res);
+					m_h_w[plane][channel]->Fill(hit.getXWidth());
 				}
 			}
 
@@ -294,7 +303,7 @@ void SectorData::MakeFits()
 
 //----------------------------------------------------------------------------------------------------
 
-void SectorData::Write() const
+void SectorData::Write()
 {
 	TDirectory *d_top = gDirectory;
 
@@ -350,6 +359,10 @@ void SectorData::Write() const
 			sprintf(buf, "channel%u", p.first);
 			gDirectory = d_pl->mkdir(buf);
 
+			TH1D *h_w = m_h_w[pp.first][p.first];
+			h_w->SetName("h_w");
+			h_w->Write();
+
 			p.second->SetName("h_x_res");
 			p.second->Write();
 
@@ -366,21 +379,22 @@ void SectorData::Write() const
 
 void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const
 {
-	// define central region
-	double cen_min=0, cen_max=1;
-	if (name == "sector 45") { cen_min = -2.0; cen_max = -1.7; }
-	if (name == "sector 56") { cen_min = -1.7; cen_max = -1.5; }
-
 	// calculate average value in the central region
-	int bin_min = h->FindBin(cen_min);
-	int bin_max = h->FindBin(cen_max);
-	double cen_avg = 0.;
-	for (int bin = bin_min; bin <= bin_max; ++bin)
-		cen_avg += h->GetBinContent(bin);
-	cen_avg /= (bin_max - bin_min + 1);
+	double cen_sum = 0., cen_n = 0.;
+	for (int bin = 1; bin <= h->GetNbinsX(); ++bin)
+	{
+		const double y = h->GetBinContent(bin);
+		if (y > 15.)
+		{
+			cen_n += 1.;
+			cen_sum += y;
+		}
+	}
+
+	const double cen_avg = (cen_n > 0.) ? cen_sum / cen_n : 0.;
 
 	// skip is statistics too low
-	if (cen_avg < 10)
+	if (cen_avg < 10.)
 		return;
 
 	// prepare canvas
@@ -395,12 +409,12 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		levels_max = { 0.3, 0.4, 0.50 };
 
 	// find crossings for all levels
-	vector<double> x_centres;
+	vector<double> x_centres, x_widths;
 
 	for (unsigned int li = 0; li < levels_min.size(); ++li)
 	{
-		bin_min = h->GetNbinsX();
-		bin_max = 0;
+		int bin_min = h->GetNbinsX();
+		int bin_max = 0;
 
 		for (int bin = 1; bin < h->GetNbinsX(); ++bin)
 		{
@@ -423,7 +437,9 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		const double x_min = h->GetBinCenter(bin_min);
 		const double x_max = h->GetBinCenter(bin_max);
 		const double x_centre = (x_max + x_min) / 2.;
+		const double x_width = x_max - x_min;
 		x_centres.push_back(x_centre);
+		x_widths.push_back(x_width);
 
 		TGraph *g = new TGraph();
 	
@@ -455,14 +471,21 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		S_r += r;
 	}
 
+	double S_w = 0.;
+	for (const auto &w : x_widths)
+		S_w += w;
+
 	const double r_avg = S_r / x_centres.size();
 	const double r_unc = r_max - r_min;
+
+	const double w_avg = S_w / x_widths.size();
 
 	// save results
 	TGraph *g_results = new TGraph();
 	g_results->SetName("g_results");
 	g_results->SetPoint(0, 0, r_avg);
 	g_results->SetPoint(1, 1, r_unc);
+	g_results->SetPoint(2, 2, w_avg);
 	g_results->Write();
 }
 

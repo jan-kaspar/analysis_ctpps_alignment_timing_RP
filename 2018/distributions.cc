@@ -86,6 +86,9 @@ struct SectorData
 	// residua distributions
 	map<unsigned int, map<unsigned int, TH1D*> > m_h_x_res;
 
+	// width distributions
+	map<unsigned int, map<unsigned int, TH1D*> > m_h_w;
+
 	SectorData(const string _name, unsigned int _rpIdUp, unsigned int _rpIdDw, unsigned int _rpIdTi, const SectorConfig &_scfg);
 
 	unsigned int Process(const vector<CTPPSLocalTrackLite> &tracks, const DetSetVector<CTPPSDiamondRecHit> &diamondHits);
@@ -94,7 +97,7 @@ struct SectorData
 
 	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const;
 
-	void Write() const;
+	void Write();
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -139,8 +142,13 @@ SectorData::SectorData(const string _name, unsigned int _rpIdUp, unsigned int _r
 
 	// residua histograms
 	for (unsigned int pl = 0; pl < 4; ++pl)
+	{
 		for (unsigned int ch = 0; ch < 12; ++ch)
+		{
 			m_h_x_res[pl][ch] = new TH1D("", ";x_res", 2500., -10., +15.);
+			m_h_w[pl][ch] = new TH1D("", ";x_res", 1000., 0., +10.);
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -261,6 +269,7 @@ unsigned int SectorData::Process(const vector<CTPPSLocalTrackLite> &tracks, cons
 				{
 					double x_res = hit.getX() - x_ti;
 					m_h_x_res[plane][channel]->Fill(x_res);
+					m_h_w[plane][channel]->Fill(hit.getXWidth());
 				}
 			}
 
@@ -280,7 +289,7 @@ void SectorData::MakeFits()
 
 //----------------------------------------------------------------------------------------------------
 
-void SectorData::Write() const
+void SectorData::Write()
 {
 	TDirectory *d_top = gDirectory;
 
@@ -336,6 +345,10 @@ void SectorData::Write() const
 			sprintf(buf, "channel%u", p.first);
 			gDirectory = d_pl->mkdir(buf);
 
+			TH1D *h_w = m_h_w[pp.first][p.first];
+			h_w->SetName("h_w");
+			h_w->Write();
+
 			p.second->SetName("h_x_res");
 			p.second->Write();
 
@@ -382,7 +395,7 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		levels_min = { 0.10, 0.15, 0.20 };
 
 	// find crossings for all levels
-	vector<double> x_centres;
+	vector<double> x_centres, x_widths;
 
 	for (unsigned int li = 0; li < levels_min.size(); ++li)
 	{
@@ -410,7 +423,9 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		const double x_min = h->GetBinCenter(bin_min);
 		const double x_max = h->GetBinCenter(bin_max);
 		const double x_centre = (x_max + x_min) / 2.;
+		const double x_width = x_max - x_min;
 		x_centres.push_back(x_centre);
+		x_widths.push_back(x_width);
 
 		TGraph *g = new TGraph();
 	
@@ -442,14 +457,21 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 		S_r += r;
 	}
 
+	double S_w = 0.;
+	for (const auto &w : x_widths)
+		S_w += w;
+
 	const double r_avg = S_r / x_centres.size();
 	const double r_unc = r_max - r_min;
+
+	const double w_avg = S_w / x_widths.size();
 
 	// save results
 	TGraph *g_results = new TGraph();
 	g_results->SetName("g_results");
 	g_results->SetPoint(0, 0, r_avg);
 	g_results->SetPoint(1, 1, r_unc);
+	g_results->SetPoint(2, 2, w_avg);
 	g_results->Write();
 }
 
