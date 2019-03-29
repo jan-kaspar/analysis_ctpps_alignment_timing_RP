@@ -1,70 +1,76 @@
 #!/bin/bash
 
-top_dir="../data/phys"
-eos_dir="/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version1"
+function BuildOne()
+{
+	local top_dir="$1"
+	local eos_dir="$2"
 
-#top_dir="../data/phys-check"
-#eos_dir="/eos/totem/data/ctpps/reconstruction/2017/postTS2_alignment_data/XYZ"
+	buffer=""
+	for f in `eos ls "$eos_dir"|grep ".root"`
+	do
+		tag=${f%.*}
 
-buffer=""
-for f in `eos ls "$eos_dir"|grep ".root"`
-do
-	tag=${f%.*}
+		fill=${tag%%_*}
+		fill=${fill#fill}
 
-	fill=${tag%%_*}
-	fill=${fill#fill}
+		if [ $fill -lt 6200 ]
+		then
+			continue
+		fi
 
-	if [ $fill -lt 6200 ]
-	then
-		continue
-	fi
+		tag=${tag#*_}
+		xangle=${tag%%_*}
+		xangle=${xangle#xangle}
 
-	tag=${tag#*_}
-	xangle=${tag%%_*}
-	xangle=${xangle#xangle}	
+		tag=${tag#*_}
+		beta=${tag%%_*}
+		beta=${beta#beta}
 
-	tag=${tag#*_}
-	beta=${tag%%_*}
-	beta=${beta#beta}
+		tag=${tag#*_}
+		stream=${tag%%_*}
 
-	tag=${tag#*_}
-	stream=${tag%%_*}
-	
-	tag="$fill,$stream"
+		tag="$fill,$stream"
 
-	buffer="$buffer $tag"
-done
+		buffer="$buffer $tag"
+	done
 
-for base in `echo "$buffer" | tr ' ' '\n' | sort -u`
-do
-	fill=${base%%,*}
+	for base in `echo "$buffer" | tr ' ' '\n' | sort -u`
+	do
+		fill=${base%%,*}
 
-	base=${base#*,}
-	stream=${base%%,*}
-	
-	echo "* fill $fill, stream $stream"
+		base=${base#*,}
+		stream=${base%%,*}
 
-	# make work directory
-	dir="$top_dir/fill_$fill/$stream/"
-	mkdir -p "$dir"
+		echo "* fill $fill, stream $stream"
 
-	# make config with input files
-	(
-		echo "import FWCore.ParameterSet.Config as cms"
-		echo ""
-		echo "input_files = cms.vstring("
+		# make work directory
+		dir="$top_dir/fill_$fill/$stream/"
+		mkdir -p "$dir"
 
-		for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep "_${stream}" | grep ".root"`
-		do
-			echo "    \"root://eostotem.cern.ch/${eos_dir}/${f}\","
-		done
+		# make config with input files
+		(
+			echo "import FWCore.ParameterSet.Config as cms"
+			echo ""
+			echo "input_files = cms.vstring("
 
-		echo ")"
-	) > "$dir/input_files.py"
+			for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep "_${stream}" | grep ".root"`
+			do
+				echo "    \"root://eostotem.cern.ch/${eos_dir}/${f}\","
+			done
 
-	# if not present, make (default) config
-	if [ ! -f "$dir/config.py" ]
-	then
-		cp "config_template.py" "$dir/config.py"
-	fi
-done
+			echo ")"
+		) > "$dir/input_files.py"
+
+		# if not present, make (default) config
+		if [ ! -f "$dir/config.py" ]
+		then
+			cp "config_template.py" "$dir/config.py"
+		fi
+	done
+}
+
+#----------------------------------------------------------------------------------------------------
+
+#BuildOne "../data/version1" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version1"
+
+BuildOne "../data/version2" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version2"
