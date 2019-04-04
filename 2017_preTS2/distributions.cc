@@ -95,7 +95,7 @@ struct SectorData
 
 	void MakeFits();
 
-	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const;
+	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel, double expWidth) const;
 
 	void Write();
 };
@@ -353,7 +353,7 @@ void SectorData::Write()
 			p.second->Write();
 
 			// process
-			AnalyzeOneChannel(p.second, pp.first, p.first);
+			AnalyzeOneChannel(p.second, pp.first, p.first, h_w->GetMean());
 		}
 	}
 
@@ -363,7 +363,7 @@ void SectorData::Write()
 
 //----------------------------------------------------------------------------------------------------
 
-void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const
+void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel, double expWidth) const
 {
 	// calculate average value in the central region
 	double cen_sum = 0., cen_n = 0.;
@@ -383,16 +383,30 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 	if (cen_avg < 10.)
 		return;
 
-	// prepare canvas
-	TCanvas *c = new TCanvas();
-	h->Draw();
-
-	// define crossing levels
+	// settings
 	vector<double> levels_min = { 0.3, 0.5, 0.7 };
 	vector<double> levels_max = { 0.3, 0.5, 0.7 };
 
+	enum { eBoth, eRight, eLeft } useEdges = eBoth;
+
+	if (plane == 1 && channel == 5)
+		levels_max = { 0.50, 0.60, 0.70 };
+
 	if (plane < 3 && channel == 7)
-		levels_min = { 0.10, 0.15, 0.20 };
+		levels_min = { 0.30, 0.40, 0.50 };
+
+	if (plane == 2 && channel == 5)
+		return;
+
+	if (plane < 3 && (channel == 5 || channel == 7))
+		useEdges = eRight;
+
+	if (name == "sector 56" && plane == 0 && channel == 7)
+		useEdges = eLeft;
+
+	// prepare canvas
+	TCanvas *c = new TCanvas();
+	h->Draw();
 
 	// find crossings for all levels
 	vector<double> x_centres, x_widths;
@@ -420,8 +434,15 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 			}
 		}
 
-		const double x_min = h->GetBinCenter(bin_min);
-		const double x_max = h->GetBinCenter(bin_max);
+		double x_min = h->GetBinCenter(bin_min);
+		double x_max = h->GetBinCenter(bin_max);
+
+		if (useEdges == eRight)
+			x_min = x_max - expWidth;
+
+		if (useEdges == eLeft)
+			x_max = x_min + expWidth;
+
 		const double x_centre = (x_max + x_min) / 2.;
 		const double x_width = x_max - x_min;
 		x_centres.push_back(x_centre);
