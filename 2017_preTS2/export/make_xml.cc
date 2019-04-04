@@ -31,7 +31,11 @@ void GetMeanCorrection(const string &sector, unsigned int plane, const vector<un
 			g_results->GetPoint(0, dummy, r);
 			g_results->GetPoint(1, dummy, r_unc);
 
-			if (r_unc > 0.1)
+			double tolerance = 0.1;
+			if (channel >= 5 && channel <= 7)
+				tolerance = 0.2;
+
+			if (r_unc > tolerance)
 				continue;
 
 			st.Fill(r);
@@ -86,7 +90,13 @@ int main()
 {
 	// select input data
 	vector<string> dirs = {
-		"data/phys/fill_6189/SingleMuon",
+		//"data/version2/fill_5848/SingleMuon",
+		//"data/version2/fill_5976/SingleMuon",
+		//"data/version2/fill_6026/SingleMuon",
+		//"data/version2/fill_6054/SingleMuon",
+		//"data/version2/fill_6142/SingleMuon",
+		//"data/version2/fill_6147/SingleMuon",
+		"data/version2/fill_6189/SingleMuon",
 	};
 
 	// define channels to use: map: sector, plane, piece --> list of channels
@@ -95,15 +105,15 @@ int main()
 	mapping[{"sector 45", 16, 0}] = {
 		{ 0, {0, 11, 1, 10, 2}, {10, 11, 2} },
 		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7} },
-		{ 3, {6}, {7} }, // crude approximation
+		{ 2, {7, 5}, {7, 5} },
+		{ 3, {6}, {7, 5} }, // crude approximation
 	};
 
 	mapping[{"sector 45", 16, 1}] = {
 		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
 		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7} },
-		{ 3, {6}, {7} }, // crude approximation
+		{ 2, {7, 5}, {7, 5} },
+		{ 3, {6}, {7, 5} }, // crude approximation
 	};
 
 	mapping[{"sector 45", 16, 2}] = {
@@ -114,21 +124,22 @@ int main()
 	};
 
 	mapping[{"sector 45", 16, 3}] = {
-		{ 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
+		{ 0, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
+		{ 10, {7, 8}, {7, 8} },
 	};
 
 	mapping[{"sector 56", 116, 0}] = {
 		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
 		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7} },
-		{ 3, {6}, {7} }, // crude approximation
+		{ 2, {7, 5}, {7, 5} },
+		{ 3, {6}, {7, 5} }, // crude approximation
 	};
 
 	mapping[{"sector 56", 116, 1}] = {
 		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
 		{ 1, {9, 3, 8, 4}, {3, 8, 4} },
-		{ 2, {7, 5}, {7} },
-		{ 3, {6}, {7} }, // crude approximation
+		{ 2, {7, 5}, {7, 5} },
+		{ 3, {6}, {7, 5} }, // crude approximation
 	};
 
 	mapping[{"sector 56", 116, 2}] = {
@@ -139,7 +150,8 @@ int main()
 	};
 
 	mapping[{"sector 56", 116, 3}] = {
-		{ 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
+		{ 0, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
+		{ 10, {7, 8}, {7, 8} },
 	};
 
 	// open input files
