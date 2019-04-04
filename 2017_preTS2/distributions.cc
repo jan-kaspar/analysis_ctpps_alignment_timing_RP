@@ -21,6 +21,9 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondRecHit.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 
+#include "alignment_classes.h"
+#include "fill_info.h"
+
 #include <vector>
 #include <string>
 
@@ -170,8 +173,8 @@ unsigned int SectorData::Process(const vector<CTPPSLocalTrackLite> &tracks, cons
 		double y = tr.getY();
 
 		// apply alignment corrections
-		if (!cfg.aligned)
-			x += cfg.alignment_corrections_x[rpDecId];
+		//if (!cfg.aligned)
+		//.	x += cfg.alignment_corrections_x[rpDecId];
 
 		// re-build track object
 		CTPPSLocalTrackLite tr_corr(tr.getRPId(), x, 0., y, 0.,
@@ -516,6 +519,20 @@ int main()
 	cfg.Print(true);
 	printf("--------------------------------------------------\n");
 
+	// load fill info
+	InitFillInfoCollection();
+
+	// load alignment constants
+	AlignmentResultsCollection alignmentCollection;
+	for (const auto &f : cfg.alignment_files)
+	{
+		if (alignmentCollection.Load(f) != 0)
+		{
+			printf("ERROR: cannot load alignment file '%s'.\n", f.c_str());
+			return 2;
+		}
+	}
+
 	// setup input
 	fwlite::ChainEvent ev(cfg.input_files);
 
@@ -544,11 +561,29 @@ int main()
 		fwlite::Handle< vector<CTPPSLocalTrackLite> > hTracks;
 		hTracks.getByLabel(ev, "ctppsLocalTrackLiteProducer");
 
+		// apply alignment
+		FillInfo fillInfo;
+		unsigned int ret = fillInfoCollection.FindByRun(ev.id().run(), fillInfo);
+		if (ret != 0)
+		{
+			printf("ERROR: cannot get fill info for run=%u.\n", ev.id().run());
+			return 3;
+		}
+
+		const auto alignment_it = alignmentCollection.find(fillInfo.alignmentTag);
+		if (alignment_it == alignmentCollection.end())
+		{
+			printf("ERROR: cannot get alignment for run=%u, tag=%s.\n", ev.id().run(), fillInfo.alignmentTag.c_str());
+			return 4;
+		}
+
+		auto tracksAligned = alignment_it->second.Apply(*hTracks);
+
 		// process tracks
-		if (sectorData45.Process(*hTracks, *hDiamondHits))
+		if (sectorData45.Process(tracksAligned, *hDiamondHits))
 			ev_sel_count_45++;
 
-		if (sectorData56.Process(*hTracks, *hDiamondHits))
+		if (sectorData56.Process(tracksAligned, *hDiamondHits))
 			ev_sel_count_56++;
 	}
 

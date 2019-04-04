@@ -44,6 +44,8 @@ struct Config
 
 	vector<string> input_files;
 
+	vector<string> alignment_files;
+
 	map<unsigned int, double> alignment_corrections_x;
 
 	bool aligned;
@@ -75,6 +77,8 @@ int Config::LoadFrom(const string &f_in)
 	dataset = config.getParameter<string>("dataset");
 
 	input_files = config.getParameter<vector<string>>("input_files");
+
+	alignment_files = config.getParameter<vector<string>>("alignment_files");
 
 	const auto &acc = config.getParameter<edm::ParameterSet>("alignment_corrections");
 	for (const auto &p : rp_tags)
