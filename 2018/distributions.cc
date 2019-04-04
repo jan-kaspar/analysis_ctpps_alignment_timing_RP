@@ -21,6 +21,9 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondRecHit.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
 
+#include "alignment_classes.h"
+#include "fill_info.h"
+
 #include <vector>
 #include <string>
 
@@ -95,7 +98,7 @@ struct SectorData
 
 	void MakeFits();
 
-	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const;
+	void AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel, double expWidth) const;
 
 	void Write();
 };
@@ -170,8 +173,8 @@ unsigned int SectorData::Process(const vector<CTPPSLocalTrackLite> &tracks, cons
 		double y = tr.getY();
 
 		// apply alignment corrections
-		if (!cfg.aligned)
-			x += cfg.alignment_corrections_x[rpDecId];
+		//if (!cfg.aligned)
+		//.	x += cfg.alignment_corrections_x[rpDecId];
 
 		// re-build track object
 		CTPPSLocalTrackLite tr_corr(tr.getRPId(), x, 0., y, 0.,
@@ -353,7 +356,7 @@ void SectorData::Write()
 			p.second->Write();
 
 			// process
-			AnalyzeOneChannel(p.second, pp.first, p.first);
+			AnalyzeOneChannel(p.second, pp.first, p.first, h_w->GetMean());
 		}
 	}
 
@@ -363,7 +366,7 @@ void SectorData::Write()
 
 //----------------------------------------------------------------------------------------------------
 
-void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel) const
+void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int channel, double expWidth) const
 {
 	// calculate average value in the central region
 	double cen_sum = 0., cen_n = 0.;
@@ -383,16 +386,29 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 	if (cen_avg < 10.)
 		return;
 
-	// prepare canvas
-	TCanvas *c = new TCanvas();
-	h->Draw();
-
-	// define crossing levels
+	// settings
 	vector<double> levels_min = { 0.3, 0.5, 0.7 };
 	vector<double> levels_max = { 0.3, 0.5, 0.7 };
 
+	enum { eBoth, eRight, eLeft } useEdges = eBoth;
+
 	if (plane < 3 && channel == 7)
 		levels_min = { 0.10, 0.15, 0.20 };
+
+	/*
+	if (plane == 2 && channel == 5)
+		return;
+
+	if (plane < 3 && (channel == 5 || channel == 7))
+		useEdges = eRight;
+
+	if (name == "sector 56" && plane == 0 && channel == 7)
+		useEdges = eLeft;
+	*/
+
+	// prepare canvas
+	TCanvas *c = new TCanvas();
+	h->Draw();
 
 	// find crossings for all levels
 	vector<double> x_centres, x_widths;
@@ -420,8 +436,15 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 			}
 		}
 
-		const double x_min = h->GetBinCenter(bin_min);
-		const double x_max = h->GetBinCenter(bin_max);
+		double x_min = h->GetBinCenter(bin_min);
+		double x_max = h->GetBinCenter(bin_max);
+
+		if (useEdges == eRight)
+			x_min = x_max - expWidth;
+
+		if (useEdges == eLeft)
+			x_max = x_min + expWidth;
+
 		const double x_centre = (x_max + x_min) / 2.;
 		const double x_width = x_max - x_min;
 		x_centres.push_back(x_centre);
@@ -495,6 +518,20 @@ int main()
 	cfg.Print(true);
 	printf("--------------------------------------------------\n");
 
+	// load fill info
+	InitFillInfoCollection();
+
+	// load alignment constants
+	AlignmentResultsCollection alignmentCollection;
+	for (const auto &f : cfg.alignment_files)
+	{
+		if (alignmentCollection.Load(f) != 0)
+		{
+			printf("ERROR: cannot load alignment file '%s'.\n", f.c_str());
+			return 2;
+		}
+	}
+
 	// setup input
 	fwlite::ChainEvent ev(cfg.input_files);
 
@@ -523,11 +560,29 @@ int main()
 		fwlite::Handle< vector<CTPPSLocalTrackLite> > hTracks;
 		hTracks.getByLabel(ev, "ctppsLocalTrackLiteProducer");
 
+		// apply alignment
+		FillInfo fillInfo;
+		unsigned int ret = fillInfoCollection.FindByRun(ev.id().run(), fillInfo);
+		if (ret != 0)
+		{
+			printf("ERROR: cannot get fill info for run=%u.\n", ev.id().run());
+			return 3;
+		}
+
+		const auto alignment_it = alignmentCollection.find(fillInfo.alignmentTag);
+		if (alignment_it == alignmentCollection.end())
+		{
+			printf("ERROR: cannot get alignment for run=%u, tag=%s.\n", ev.id().run(), fillInfo.alignmentTag.c_str());
+			return 4;
+		}
+
+		auto tracksAligned = alignment_it->second.Apply(*hTracks);
+
 		// process tracks
-		if (sectorData45.Process(*hTracks, *hDiamondHits))
+		if (sectorData45.Process(tracksAligned, *hDiamondHits))
 			ev_sel_count_45++;
 
-		if (sectorData56.Process(*hTracks, *hDiamondHits))
+		if (sectorData56.Process(tracksAligned, *hDiamondHits))
 			ev_sel_count_56++;
 	}
 

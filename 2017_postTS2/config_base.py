@@ -5,6 +5,8 @@ config = cms.PSet(
     xangle = cms.uint32(0),
     dataset = cms.string(""),
 
+    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2017_postTS2/collect_alignments_2018_10_25.5.out"),
+
     alignment_corrections = cms.PSet(
       rp_L_2_F = cms.PSet(
         de_x = cms.double(-42.2)

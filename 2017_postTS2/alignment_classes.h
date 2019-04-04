@@ -1,28 +1,60 @@
-#include <cstring>
+#ifndef _alignment_classes_h_
+#define _alignment_classes_h_
 
-using namespace std;
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <map>
+#include <vector>
+#include <set>
+#include <string>
+
+#include <Math/Rotation3D.h>
+#include <Math/RotationZYX.h>
+#include <Math/Vector3D.h>
+
+#include "DataFormats/CTPPSReco/interface/CTPPSLocalTrackLite.h"
+
+#include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
 
 //----------------------------------------------------------------------------------------------------
 
 struct AlignmentResult
 {
-	double sh_x, sh_x_unc;		// mm
-	double sh_y, sh_y_unc;		// mm
+	double sh_x=0., sh_x_unc=0.;		// mm
+	double sh_y=0., sh_y_unc=0.;		// mm
 
-	AlignmentResult(double _sh_x=0., double _sh_x_unc=0., double _sh_y=0., double _sh_y_unc=0.) :
-		sh_x(_sh_x), sh_x_unc(_sh_x_unc), sh_y(_sh_y), sh_y_unc(_sh_y_unc)
+	double rot_x=0., rot_x_unc=0.;	// rad
+	double rot_y=0., rot_y_unc=0.;	// rad
+	double rot_z=0., rot_z_unc=0.;	// rad
+
+	AlignmentResult(double _sh_x=0., double _sh_x_unc=0., double _sh_y=0., double _sh_y_unc=0., double _rot_z=0., double _rot_z_unc=0.) :
+		sh_x(_sh_x), sh_x_unc(_sh_x_unc), sh_y(_sh_y), sh_y_unc(_sh_y_unc), rot_z(_rot_z), rot_z_unc(_rot_z_unc)
 	{
 	}
 
 	void Write(FILE *f) const
 	{
-		fprintf(f, "sh_x=%.3f,sh_x_unc=%.3f,sh_y=%.3f,sh_y_unc=%.3f\n", sh_x, sh_x_unc, sh_y, sh_y_unc);
+		fprintf(f, "sh_x=%+.3f,sh_x_unc=%+.3f,sh_y=%+.3f,sh_y_unc=%+.3f,", sh_x, sh_x_unc, sh_y, sh_y_unc);
+		fprintf(f, "rot_x=%+.4f,rot_x_unc=%+.4f,rot_y=%+.4f,rot_y_unc=%+.4f,rot_z=%+.4f,rot_z_unc=%+.4f\n", rot_x, rot_x_unc, rot_y, rot_y_unc, rot_z, rot_z_unc);
+	}
+
+	CTPPSLocalTrackLite Apply(const CTPPSLocalTrackLite &tr) const
+	{
+        ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<double>> v(tr.getX(), tr.getY(), 0.);
+        ROOT::Math::DisplacementVector3D<ROOT::Math::Cartesian3D<double>> s(sh_x, -sh_y, 0.);
+        ROOT::Math::RotationZYX R(-rot_z, rot_y, rot_x);
+        v = R * v + s;
+
+        // TODO: the uncertainty assumes very small rotations
+		return CTPPSLocalTrackLite(tr.getRPId(), v.x(), tr.getXUnc(), v.y(), tr.getYUnc(),
+			0., 0., 0., 0., 0., (CTPPSpixelLocalTrackReconstructionInfo)0, 0, 0., 0.);
 	}
 };
 
 //----------------------------------------------------------------------------------------------------
 
-struct AlignmentResults : public map<unsigned int, AlignmentResult>
+struct AlignmentResults : public std::map<unsigned int, AlignmentResult>
 {
 	void Write(FILE *f) const
 	{
@@ -35,6 +67,12 @@ struct AlignmentResults : public map<unsigned int, AlignmentResult>
 
 	int Add(char *line)
 	{
+        // ignore anything after "#"
+        char *hash_pos = strstr(line, "#");
+        if (hash_pos)
+          *hash_pos = 0;
+
+        // defaults
 		bool idSet = false;
 		unsigned int id = 0;
 		AlignmentResult result;
@@ -67,6 +105,15 @@ struct AlignmentResults : public map<unsigned int, AlignmentResult>
 				continue;
 			}
 
+			if (strcmp(s_key, "full_id") == 0)
+			{
+				idSet = true;
+                id = atoi(s_val);
+                CTPPSDetId rpId(id);
+                id = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+				continue;
+			}
+
 			if (strcmp(s_key, "sh_x") == 0)
 			{
 				result.sh_x = atof(s_val);
@@ -91,6 +138,42 @@ struct AlignmentResults : public map<unsigned int, AlignmentResult>
 				continue;
 			}
 
+			if (strcmp(s_key, "rot_x") == 0)
+			{
+				result.rot_x = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_x_unc") == 0)
+			{
+				result.rot_x_unc = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_y") == 0)
+			{
+				result.rot_y = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_y_unc") == 0)
+			{
+				result.rot_y_unc = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_z") == 0)
+			{
+				result.rot_z = atof(s_val);
+				continue;
+			}
+
+			if (strcmp(s_key, "rot_z_unc") == 0)
+			{
+				result.rot_z_unc = atof(s_val);
+				continue;
+			}
+
 			printf("ERROR in AlignmentResults::Add > unknown key: %s.\n", s_key);
 			return 3;
 		}
@@ -105,17 +188,38 @@ struct AlignmentResults : public map<unsigned int, AlignmentResult>
 
 		return 0;
 	}
+
+	std::vector<CTPPSLocalTrackLite> Apply(const std::vector<CTPPSLocalTrackLite> &input) const
+	{
+        std::vector<CTPPSLocalTrackLite> output;
+
+		for (auto &t : input)
+		{
+            CTPPSDetId rpId(t.getRPId());
+            unsigned int rpDecId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+
+			auto ait = find(rpDecId);
+			if (ait == end())
+			{
+				printf("ERROR: no alignment for RP %u.\n", rpDecId);
+			}
+
+            output.emplace_back(ait->second.Apply(t));
+		}
+
+		return output;
+	}
 };
 
 //----------------------------------------------------------------------------------------------------
 
-struct AlignmentResultsCollection : public map<string, AlignmentResults>
+struct AlignmentResultsCollection : public std::map<std::string, AlignmentResults>
 {
-	int Write(const string &fn) const
+	int Write(const std::string &fn) const
 	{
 		FILE *f = fopen(fn.c_str(), "w");
 		if (!f)
-			return -1;
+			return 1;
 
 		Write(f);
 
@@ -133,20 +237,22 @@ struct AlignmentResultsCollection : public map<string, AlignmentResults>
 		}
 	}
 
-	int Load(const string &fn)
+	int Load(const std::string &fn)
 	{
 		FILE *f = fopen(fn.c_str(), "r");
+
 		if (!f)
-			return -1;
+			return 1;
 
-		return Load(f);
-
+		int r = Load(f);
 		fclose(f);
+
+		return r;
 	}
 
 	int Load(FILE *f)
 	{
-		string label = "unknown";
+		std::string label = "unknown";
 		AlignmentResults block;
 
 		while (!feof(f))
@@ -191,3 +297,5 @@ struct AlignmentResultsCollection : public map<string, AlignmentResults>
 		return 0;
 	}
 };
+
+#endif
