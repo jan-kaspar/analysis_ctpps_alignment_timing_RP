@@ -86,7 +86,9 @@ int main()
 {
 	// select input data
 	vector<string> dirs = {
-		"data/phys/fill_6306/SingleMuon",
+		"data/phys/fill_6239/SingleMuon",
+		"data/phys/fill_6259/SingleMuon",
+		"data/phys/fill_6288/SingleMuon",
 	};
 
 	// define channels to use: map: sector, plane, piece --> list of channels
