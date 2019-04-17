@@ -49,19 +49,19 @@ function BuildOne()
 		tag=${tag#*_}
 		stream=${tag%%_*}
 
-		fill_selected="0"
-		for fillIt in ${fills[*]}
-		do
-			if [ "$fillIt" == "$fill" ]
-			then
-				fill_selected="1"
-			fi
-		done
-
-		if [ "$fill_selected" != "1" ]
-		then
-			continue
-		fi
+#		fill_selected="0"
+#		for fillIt in ${fills[*]}
+#		do
+#			if [ "$fillIt" == "$fill" ]
+#			then
+#				fill_selected="1"
+#			fi
+#		done
+#
+#		if [ "$fill_selected" != "1" ]
+#		then
+#			continue
+#		fi
 
 		if [ "$stream" != "SingleMuon" ]
 		then
