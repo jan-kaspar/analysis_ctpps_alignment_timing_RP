@@ -23,7 +23,8 @@ using namespace std;
 bool GetMeanCorrection(const string &sector, unsigned int plane, const vector<unsigned int> &channels, TFile *file,
 		double &corr_mean, double &corr_stddev)
 {
-	Stat st(1);
+	unsigned int n = 0;
+	double sw=0., swr=0.;
 
 	for (const auto &channel : channels)
 	{
@@ -37,16 +38,27 @@ bool GetMeanCorrection(const string &sector, unsigned int plane, const vector<un
 		g_results->GetPoint(0, dummy, r);
 		g_results->GetPoint(1, dummy, r_unc);
 
+		if (r < -0.2 || r > +0.8)
+			continue;
+
 		if (r_unc > 0.1)
 			continue;
 
-		st.Fill(r);
+		const double r_unc_eff = max(r_unc, 0.020);
+		const double w = 1./r_unc_eff/r_unc_eff;
+
+		n++;
+		sw += w;
+		swr += w * r;
 	}
 
-	corr_mean = st.GetMean(0);
-	corr_stddev = st.GetStdDev(0);
+	if (n == 0)
+		return false;
 
-	return (st.GetEntries() > 0.);
+	corr_mean = swr / sw;
+	corr_stddev = 1. / sqrt(sw);
+
+	return true;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -207,7 +219,7 @@ int main()
 					if (!valid)
 						continue;
 
-					corr_unc = sqrt(corr_unc*corr_unc + 0.050*0.050);
+					//corr_unc = sqrt(corr_unc*corr_unc + 0.025*0.025);
 
 					for (const auto &ch : piece.target_channels)
 					{
