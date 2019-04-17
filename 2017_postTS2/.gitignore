@@ -6,6 +6,9 @@
 *.pyc
 *.xml
 
+condor.sub
+jkaspar.cc
+
 data
 reduction
 
