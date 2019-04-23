@@ -131,7 +131,7 @@ int main()
 	InitFillsRuns(false);
 	//PrintFillRunMapping();
 
-	string topDir = "../data/version3";
+	string topDir = "../data/version4";
 
 	vector<string> datasets = {
 		//"ALL"
