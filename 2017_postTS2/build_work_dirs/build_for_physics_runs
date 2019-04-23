@@ -114,4 +114,6 @@ function BuildOne()
 
 #BuildOne "../data/version2" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/timing-version2"
 
-BuildOne "../data/version3" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/rec-hit-version1"
+#BuildOne "../data/version3" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/rec-hit-version1"
+
+BuildOne "../data/version4" "/eos/totem/data/ctpps/reconstruction/2017/physics_runs/rec-hit-version1"
