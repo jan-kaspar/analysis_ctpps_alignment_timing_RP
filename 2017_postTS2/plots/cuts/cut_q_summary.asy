@@ -2,9 +2,9 @@ import root;
 import pad_layout;
 
 string datasets[];
-datasets.push("fill_6306/SingleMuon");
-datasets.push("fill_6362/SingleMuon");
-
+datasets.push("data/version2/fill_6288/SingleMuon");
+datasets.push("data/version2/fill_6337/SingleMuon");
+//datasets.push("data/version2/fill_6362/SingleMuon");
 
 string topDir = "../../";
 
@@ -53,10 +53,10 @@ for (int dsi : datasets.keys)
 			TH1_x_max = x_max;
 
 
-			string f = topDir + "data/phys/" + datasets[dsi] + "/distributions.root";
+			string f = topDir + datasets[dsi] + "/distributions.root";
 			string obj_path = sectors[sci] + "/cuts/" + cuts[cti] + "/h_q_" + cuts[cti] + "_aft";
 
-			pen p = red;
+			pen p = red+1pt;
 
 			RootObject obj = RootGetObject(f, obj_path, error=false);
 			if (obj.valid)

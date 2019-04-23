@@ -4,7 +4,7 @@ import pad_layout;
 string topDir = "../../";
 
 string rp_sectors[], rp_labels[];
-rp_sectors.push("sector 45"); rp_labels.push("sector_45");
+//rp_sectors.push("sector 45"); rp_labels.push("sector_45");
 rp_sectors.push("sector 56"); rp_labels.push("sector_56");
 
 int planes[] = { 0, 1, 2, 3 };
@@ -13,7 +13,7 @@ int channels[];
 for (int i = 0; i < 12; ++i)
 	channels.push(i);
 
-string dir = "data/phys/fill_6288/SingleMuon";
+string dir = "data/version2/fill_6306/SingleMuon";
 
 //yTicksDef = RightTicks(0.1, 0.05);
 
@@ -52,8 +52,8 @@ for (int rpi : rp_sectors.keys)
 			if (! h_x.valid)
 				continue;
 
-			TH1_x_min = -5;
-			TH1_x_max = +15;
+			TH1_x_min = -3;
+			TH1_x_max = +3;
 
 			draw(h_x, "vl", red);
 			draw(g_crossing, "l", blue+1pt);

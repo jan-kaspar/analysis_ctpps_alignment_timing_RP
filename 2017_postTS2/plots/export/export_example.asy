@@ -3,22 +3,14 @@ import pad_layout;
 
 string topDir = "../../";
 
-string datasets[];
-mark d_marks[];
+//string dataset = "data/version4/fill_6240/SingleMuon"; real fill_number = 6240;
+string dataset = "data/version4/fill_6288/SingleMuon"; real fill_number = 6288;
+//string dataset = "data/version4/fill_6312/SingleMuon"; real fill_number = 6312;
+//string dataset = "data/version4/fill_6371/SingleMuon"; real fill_number = 6371;
 
-datasets.push("data/version3/fill_6240/SingleMuon"); d_marks.push(mCi);
-
-
-datasets.push("data/version3/fill_6288/SingleMuon"); d_marks.push(mTU);
-//datasets.push("data/version3/fill_6297/SingleMuon"); d_marks.push(mTU);
-//datasets.push("data/version3/fill_6305/SingleMuon"); d_marks.push(mTU);
-
-datasets.push("data/version3/fill_6312/SingleMuon"); d_marks.push(mTD );
-datasets.push("data/version3/fill_6371/SingleMuon"); d_marks.push(mSq + false);
-
-string rp_sectors[], rp_labels[];
-rp_sectors.push("sector 45"); rp_labels.push("sector 45");
-rp_sectors.push("sector 56"); rp_labels.push("sector 56");
+string rps[], rp_sectors[], rp_labels[];
+rps.push("16"); rp_sectors.push("sector 45"); rp_labels.push("sector 45");
+rps.push("116"); rp_sectors.push("sector 56"); rp_labels.push("sector 56");
 
 int n_planes = 4;
 
@@ -36,6 +28,8 @@ p_pens.push(red);
 p_pens.push(blue);
 p_pens.push(heavygreen);
 p_pens.push(magenta);
+
+bool plot_fits = true;
 
 //----------------------------------------------------------------------------------------------------
 
@@ -84,31 +78,38 @@ for (int plane = 0; plane < n_planes; ++plane)
 
 		for (int ch = 0; ch < n_channels; ++ch)
 		{
-			for (int dsi : datasets.keys)
+			string f = topDir + dataset + "/distributions.root";
+
+			pen p = GetPen(plane, ch);
+
+			string obj_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", ch) + "/g_results";
+			RootObject obj = RootGetObject(f, obj_path, error=false);
+
+			if (obj.valid)
 			{
-				string f = topDir + datasets[dsi] + "/distributions.root";
-
-				string obj_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", ch) + "/g_results";
-				RootObject obj = RootGetObject(f, obj_path, error=false);
-				if (!obj.valid)
-					continue;
-
 				real ax[] = {0.};
 				real ay[] = {0.};
 
 				obj.vExec("GetPoint", 0, ax, ay); real corr = ay[0];
 				obj.vExec("GetPoint", 1, ax, ay); real corr_unc = ay[0];
 
-				if (corr_unc > 0.1)
-					continue;
+				if (corr_unc < 0.1)
+				{
+					real x = ch;
 
-				real x = ch;
-				if (datasets.length > 1)
-					x += - amp/2. + dsi * amp / (datasets.length-1);
+					draw((x, corr), mCi+2pt+p);
+					draw((x, corr-corr_unc)--(x, corr+corr_unc), p);
+				}
+			}
 
-				pen p = GetPen(plane, ch);
-				draw((x, corr), d_marks[dsi]+2pt+p);
-				draw((x, corr-corr_unc)--(x, corr+corr_unc), p);
+			if (plot_fits)
+			{
+				string f = topDir + "export/fit_timing_alignments.root";
+				RootObject fit = RootGetObject(f, rps[rpi] + format("_%u", plane) + format("_%u", ch) + "#0");
+
+				real v = fit.rExec("Eval", fill_number);
+
+				draw((ch-amp/2., v)--(ch+amp/2, v), p);
 			}
 		}
 
@@ -119,8 +120,7 @@ for (int plane = 0; plane < n_planes; ++plane)
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
-for (int dsi : datasets.keys)
-	AddToLegend(replace(datasets[dsi], "_", "\_"), d_marks[dsi]+2pt);
+AddToLegend(replace(dataset, "_", "\_"), mCi+2pt);
 for (int pi : p_pens.keys)
 	AddToLegend(format("diamond/piece %u", pi), p_pens[pi]);
 
