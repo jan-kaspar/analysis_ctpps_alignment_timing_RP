@@ -9,6 +9,7 @@ rp_ids.push("116"); rp_labels.push("56-220-ti");
 
 string planes[] = { "0", "1", "2", "3" };
 
+//string channels[] = { "0", "1", "2" };
 string channels[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11" };
 
 TGraph_errorBar = None;

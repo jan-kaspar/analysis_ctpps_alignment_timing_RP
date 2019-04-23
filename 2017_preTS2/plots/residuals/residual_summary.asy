@@ -14,7 +14,7 @@ for (int i = 0; i < 12; ++i)
 	channels.push(i);
 
 
-string dir = "data/phys/fill_6189/SingleMuon";
+string dir = "data/version2/fill_6189/SingleMuon";
 
 //yTicksDef = RightTicks(0.1, 0.05);
 
@@ -56,8 +56,8 @@ for (int rpi : rp_sectors.keys)
 			if (! h_x.valid)
 				continue;
 
-			TH1_x_min = -5;
-			TH1_x_max = +15;
+			TH1_x_min = -2;
+			TH1_x_max = +3;
 
 			draw(h_x, "vl", red);
 			draw(g_crossing, "l", blue+1pt);
@@ -74,7 +74,7 @@ for (int rpi : rp_sectors.keys)
 			//currentpad.xTicks = LeftTicks(0.5, 0.1);
 			//xlimits(-2.6, -0.8, Crop);
 			currentpad.xTicks = LeftTicks(1., 0.5);
-			xlimits(-5., +5., Crop);
+			xlimits(-2., +3., Crop);
 
 			yaxis(XEquals(corr, false), heavygreen+2pt);
 
