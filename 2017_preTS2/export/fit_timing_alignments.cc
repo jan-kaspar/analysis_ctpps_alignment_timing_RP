@@ -131,7 +131,7 @@ int main()
 	InitFillsRuns(false);
 	//PrintFillRunMapping();
 
-	string topDir = "../data/version3";
+	string topDir = "../data/version4";
 
 	vector<string> datasets = {
 		//"ALL"
@@ -242,7 +242,8 @@ int main()
 	// fit plots
 	for (auto &p : channelData)
 	{
-		p.second.f_fit = new TF1("", "[0] + [1]*x");
+		//p.second.f_fit = new TF1("", "[0] + [1]*x");
+		p.second.f_fit = new TF1("", "[0]");
 		p.second.g_corr_vs_fill->Fit(p.second.f_fit, "Q");
 	}
 
