@@ -8,8 +8,6 @@ function BuildOne()
 	buffer=""
 	for f in `eos ls "$eos_dir"|grep ".root"`
 	do
-		#echo "$f"
-
 		tag=${f%.*}
 
 		fill=${tag%%_*}
@@ -26,9 +24,12 @@ function BuildOne()
 		tag=${tag#*_}
 		stream=${tag%%_*}
 
-		tag="$fill,$stream"
+		if [ "$stream" != "SingleMuon" ]
+		then
+			continue
+		fi
 
-		#echo "  --> $tag"
+		tag="$fill,$stream"
 
 		buffer="$buffer $tag"
 	done
@@ -72,4 +73,6 @@ function BuildOne()
 
 #BuildOne "../data/version1" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version1"
 
-BuildOne "../data/version2" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version2"
+#BuildOne "../data/version2" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version2"
+
+BuildOne "../data/version3" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/rec-hit-version1"
