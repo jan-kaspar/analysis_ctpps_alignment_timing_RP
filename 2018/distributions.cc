@@ -576,7 +576,21 @@ int main()
 			return 4;
 		}
 
-		auto tracksAligned = alignment_it->second.Apply(*hTracks);
+		vector<CTPPSLocalTrackLite> tracksAligned;
+		for (const auto &t : *hTracks)
+		{
+			CTPPSDetId rpId(t.getRPId());
+			if (rpId.subdetId() != CTPPSDetId::sdTrackingStrip && rpId.subdetId() != CTPPSDetId::sdTrackingPixel)
+				continue;
+
+			unsigned int rpDecId = rpId.arm()*100 + rpId.station()*10 + rpId.rp();
+
+			auto ait = alignment_it->second.find(rpDecId);
+			if (ait == alignment_it->second.end())
+				printf("ERROR: no alignment for RP %u.\n", rpDecId);
+
+			tracksAligned.emplace_back(ait->second.Apply(t));
+		}
 
 		// process tracks
 		if (sectorData45.Process(tracksAligned, *hDiamondHits))
