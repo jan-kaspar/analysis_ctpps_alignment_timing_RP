@@ -5,7 +5,7 @@ config = cms.PSet(
     xangle = cms.uint32(0),
     dataset = cms.string(""),
 
-    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/collect_alignments_2018_11_02.3.out"),
+    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/fit_alignments_2019_05_09.1.out"),
 
     alignment_corrections = cms.PSet(
       rp_L_2_F = cms.PSet(
@@ -29,24 +29,24 @@ config = cms.PSet(
     sector_45 = cms.PSet(
 	  cut_h_apply = cms.bool(True),
 	  cut_h_a = cms.double(-1),
-	  cut_h_c = cms.double(-0.03),
+	  cut_h_c = cms.double(-0.08),
 	  cut_h_si = cms.double(0.2),
 
 	  cut_v_apply = cms.bool(True),
 	  cut_v_a = cms.double(-1.07),
-	  cut_v_c = cms.double(+1.45),
+	  cut_v_c = cms.double(0.),
 	  cut_v_si = cms.double(0.20)
     ),
 
     sector_56 = cms.PSet(
 	  cut_h_apply = cms.bool(True),
 	  cut_h_a = cms.double(-1),
-	  cut_h_c = cms.double(-0.3),
+	  cut_h_c = cms.double(+0.08),
 	  cut_h_si = cms.double(0.2),
 
 	  cut_v_apply = cms.bool(True),
 	  cut_v_a = cms.double(-1.07),
-	  cut_v_c = cms.double(+2.00),
+	  cut_v_c = cms.double(0.),
 	  cut_v_si = cms.double(0.15)
     ),
 

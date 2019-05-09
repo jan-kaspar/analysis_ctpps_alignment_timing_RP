@@ -3,17 +3,13 @@ import pad_layout;
 
 string datasets[];
 datasets.push("fill_6617/SingleMuon");
-datasets.push("fill_6617/ZeroBias");
-datasets.push("fill_6700/ZeroBias");
-datasets.push("fill_6860/SingleMuon");
-datasets.push("fill_6860/ZeroBias");
-datasets.push("fill_7045/ZeroBias");
+datasets.push("fill_6729/SingleMuon");
+datasets.push("fill_6923/SingleMuon");
+datasets.push("fill_7039/SingleMuon");
 datasets.push("fill_7137/SingleMuon");
-datasets.push("fill_7137/ZeroBias");
-datasets.push("fill_7320/ZeroBias");
+datasets.push("fill_7315/SingleMuon");
 
-
-string topDir = "../../";
+string topDir = "../../data/version3/";
 
 string sectors[];
 sectors.push("sector 45");
@@ -60,7 +56,7 @@ for (int dsi : datasets.keys)
 			TH1_x_max = x_max;
 
 
-			string f = topDir + "data/phys/" + datasets[dsi] + "/distributions.root";
+			string f = topDir + datasets[dsi] + "/distributions.root";
 			string obj_path = sectors[sci] + "/cuts/" + cuts[cti] + "/h_q_" + cuts[cti] + "_aft";
 
 			pen p = red;
