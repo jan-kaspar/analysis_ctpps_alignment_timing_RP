@@ -87,6 +87,17 @@ void InitFillsRuns(bool useExceptionList = true)
 	fills_runs[6370] = {306416, 306417, 306418, 306419, 306420, 306421, 306422, 306423, 306425, 306432};
 	fills_runs[6371] = {306454, 306455, 306456, 306457, 306458, 306459, 306460, 306461, 306462};
 
+	fills_runs[6402] = {306896, 306897};
+	fills_runs[6404] = {306926, 306929};
+	fills_runs[6405] = {306936};
+	fills_runs[6411] = {307014, 307015, 307016, 307017};
+	fills_runs[6413] = {307042, 307044, 307045, 307046, 307047, 307048, 307049, 307050, 307051, 307052, 307053, 307054, 307055, 307062, 307063};
+	fills_runs[6415] = {307073, 307075, 307076};
+	fills_runs[6417] = {307082};
+
+	// fills to process (CMS golden & RPs inserted)
+	fills.push_back(6238);	// low pile-up run
+
 	fills.push_back(6239);
 	fills.push_back(6240);
 	fills.push_back(6241);
@@ -154,6 +165,17 @@ void InitFillsRuns(bool useExceptionList = true)
 	fills.push_back(6370);
 	fills.push_back(6371);
 
+	// TODO
+	/*
+	fills.push_back(6402);	// W-mass fills
+	fills.push_back(6404);
+	fills.push_back(6405);
+	fills.push_back(6411);
+	fills.push_back(6413);
+	fills.push_back(6415);
+	fills.push_back(6417);
+	 */
+
 	// build fill reference
 	for (const auto &fill : fills)
 	{
@@ -161,9 +183,13 @@ void InitFillsRuns(bool useExceptionList = true)
 
 		if (useExceptionList)
 		{
+			if (fill == 6238) ref = { 6287, 6239 };
+
 			if (fill >= 6239 && fill <= 6285) ref = { 6287, fill };
 			if (fill == 6245) ref = { 6287, 6247 };
 			if (fill == 6351) ref = { 6355, 6355 };
+
+			if (fill >= 6402 && fill <= 6417) ref = { 6371, 6371 };
 		}
 
 		fills_reference[fill] = ref;
