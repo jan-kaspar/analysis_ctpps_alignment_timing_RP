@@ -8,7 +8,7 @@ make_xml : make_xml.cc
 		-lDataFormatsFWLite -lDataFormatsCommon -lDataFormatsCTPPSDetId -lFWCoreParameterSet -lFWCorePythonParameterSet \
 			make_xml.cc -o make_xml
 
-fit_timing_alignments : fit_timing_alignments.cc
+fit_timing_alignments : fit_timing_alignments.cc fills_runs.h
 	g++ `root-config --libs` -lMinuit `root-config --cflags` \
 		-g -O3 --std=c++1z -Wall -Wextra -Wno-attributes\
 		-I$(CMSSW_RELEASE_BASE)/src \
