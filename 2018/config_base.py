@@ -5,7 +5,7 @@ config = cms.PSet(
     xangle = cms.uint32(0),
     dataset = cms.string(""),
 
-    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/work/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/fit_alignments_2019_07_11.out"),
+    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/work/software/ctpps/development/TO_SAVE/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/fit_alignments_2019_07_11.out"),
 
     alignment_corrections = cms.PSet(
       rp_L_2_F = cms.PSet(
