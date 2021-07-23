@@ -116,8 +116,8 @@ then
 
 		echo "+MaxRuntime = 7200"
 		#echo "+JobBatchName = \"$job_name\""
-		echo "requirements = (OpSysAndVer =?= \"SLCern6\")"
-		#echo "requirements = (OpSysAndVer =?= \"CentOS7\")"
+		#echo "requirements = (OpSysAndVer =?= \"SLCern6\")"
+		echo "requirements = (OpSysAndVer =?= \"CentOS7\")"
 
 	) > "$condor_file_sub"
 fi

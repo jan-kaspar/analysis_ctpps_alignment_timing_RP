@@ -4,7 +4,7 @@ import pad_layout;
 string topDir = "../../";
 
 string rp_sectors[], rp_labels[];
-rp_sectors.push("sector 45"); rp_labels.push("sector_45");
+//rp_sectors.push("sector 45"); rp_labels.push("sector_45");
 rp_sectors.push("sector 56"); rp_labels.push("sector_56");
 
 int planes[] = { 0, 1, 2, 3 };
@@ -23,7 +23,12 @@ channels.push(9);
 channels.push(10);
 channels.push(11);
 
-string dir = "data/phys/fill_7137/ZeroBias";
+//string dir = "data/version4/fill_6778/ALL";
+
+//string dir = "data/version4/fill_6854/ALL";
+//string dir = "data/version4/fill_7013/ALL";
+string dir = "data/version4/fill_7137/ALL";
+//string dir = "data/version4/fill_7334/ALL";
 
 //yTicksDef = RightTicks(0.1, 0.05);
 
@@ -65,8 +70,12 @@ for (int rpi : rp_sectors.keys)
 			if (! h_x.valid)
 				continue;
 
-			TH1_x_min = -5;
-			TH1_x_max = +15;
+			TH1_x_min = -10;
+			TH1_x_max = +10;
+
+			int rebin = 10;
+			h_x.vExec("Rebin", rebin);
+			h_x.vExec("Scale", 1./rebin);
 
 			draw(h_x, "vl", red);
 			draw(g_crossing, "l", blue+1pt);

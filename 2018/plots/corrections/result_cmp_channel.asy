@@ -24,7 +24,7 @@ channels.push(2); ch_pens.push(black);
 
 real amp = 0.4;
 
-string dir = "data/phys/fill_7320/ZeroBias";
+string dir = "data/version4/fill_7320/ALL";
 
 yTicksDef = RightTicks(1., 0.5);
 //yTicksDef = RightTicks(0.1, 0.05);

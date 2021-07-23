@@ -148,7 +148,7 @@ SectorData::SectorData(const string _name, unsigned int _rpIdUp, unsigned int _r
 	{
 		for (unsigned int ch = 0; ch < 12; ++ch)
 		{
-			m_h_x_res[pl][ch] = new TH1D("", ";x_res", 2500., -10., +15.);
+			m_h_x_res[pl][ch] = new TH1D("", ";x_res", 3000., -15., +15.);
 			m_h_w[pl][ch] = new TH1D("", ";x_res", 1000., 0., +10.);
 		}
 	}
@@ -392,19 +392,22 @@ void SectorData::AnalyzeOneChannel(TH1D *h, unsigned int plane, unsigned int cha
 
 	enum { eBoth, eRight, eLeft } useEdges = eBoth;
 
-	if (plane < 3 && channel == 7)
-		levels_min = { 0.10, 0.15, 0.20 };
+	if (name == "sector 45")
+	{
+		if (channel == 5 && plane >= 1) levels_max = { 0.6, 0.65, 0.7 };
 
-	/*
-	if (plane == 2 && channel == 5)
-		return;
+		if (channel == 5 && plane >= 1) useEdges = eRight;
+		if (channel == 6 && plane == 0) useEdges = eRight;
+		if (channel == 7 && plane == 1) useEdges = eRight;
+	}
 
-	if (plane < 3 && (channel == 5 || channel == 7))
-		useEdges = eRight;
+	if (name == "sector 56")
+	{
+		if (channel == 4 && plane >= 2) levels_max = { 0.80, 0.85, 0.90 };
+		if (channel == 7 && plane >= 1) levels_max = { 0.80, 0.85, 0.90 };
 
-	if (name == "sector 56" && plane == 0 && channel == 7)
-		useEdges = eLeft;
-	*/
+		if (channel == 7 && plane >= 1) useEdges = eRight;
+	}
 
 	// prepare canvas
 	TCanvas *c = new TCanvas();

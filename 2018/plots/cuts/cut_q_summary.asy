@@ -2,14 +2,32 @@ import root;
 import pad_layout;
 
 string datasets[];
-datasets.push("fill_6617/SingleMuon");
-datasets.push("fill_6729/SingleMuon");
-datasets.push("fill_6923/SingleMuon");
-datasets.push("fill_7039/SingleMuon");
-datasets.push("fill_7137/SingleMuon");
-datasets.push("fill_7315/SingleMuon");
+/*
+datasets.push("fill_6617/ALL");
+datasets.push("fill_6729/ALL");
+datasets.push("fill_6923/ALL");
+datasets.push("fill_7039/ALL");
+datasets.push("fill_7137/ALL");
+datasets.push("fill_7315/ALL");
+*/
 
-string topDir = "../../data/version3/";
+datasets.push("fill_6617/ALL");
+datasets.push("fill_6639/ALL");
+datasets.push("fill_6674/ALL");
+datasets.push("fill_6700/ALL");
+datasets.push("fill_6729/ALL");
+datasets.push("fill_6770/ALL");
+datasets.push("fill_6901/ALL");
+datasets.push("fill_6923/ALL");
+datasets.push("fill_6998/ALL");
+datasets.push("fill_7039/ALL");
+datasets.push("fill_7087/ALL");
+datasets.push("fill_7137/ALL");
+datasets.push("fill_7234/ALL");
+datasets.push("fill_7315/ALL");
+datasets.push("fill_7334/ALL");
+
+string topDir = "../../data/version4/";
 
 string sectors[];
 sectors.push("sector 45");

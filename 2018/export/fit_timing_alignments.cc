@@ -38,7 +38,7 @@ bool GetMeanCorrection(const string &sector, unsigned int plane, const vector<un
 		g_results->GetPoint(0, dummy, r);
 		g_results->GetPoint(1, dummy, r_unc);
 
-		if (r < -0.2 || r > +0.8)
+		if (r < -3. || r > +2.)
 			continue;
 
 		if (r_unc > 0.1)
@@ -134,67 +134,69 @@ int main()
 	string topDir = "../data/version4";
 
 	vector<string> datasets = {
-		//"ALL"
+		"ALL"
 		//"DoubleEG",
-		"SingleMuon",
+		//"SingleMuon",
 		//"ZeroBias",
 	};
 
 	// define channels to use: map: sector, plane, piece --> list of channels
 	map<Key, vector<Piece>> mapping;
 
-	// TODO: update below!!
-
 	mapping[{"sector 45", 16, 0}] = {
 		{ 0, {0, 11, 1, 10, 2}, {11, 10, 2} },
 		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7, 5} },
-		{ 3, {6}, {7, 5} }, // crude approximation
+		{ 2, {7, 5}, {7} },
+		{ 3, {6}, {6} },
 	};
 
 	mapping[{"sector 45", 16, 1}] = {
-		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
-		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7, 5} },
-		{ 3, {6}, {7, 5} }, // crude approximation
+		{ 0, {0, 11, 1, 10}, {11, 10} },
+		{ 1, {2, 9, 3, 8, 4}, {2, 9, 3, 8, 4} },
+		{ 2, {7}, {7} },
+		{ 3, {5, 6}, {5} },
 	};
 
 	mapping[{"sector 45", 16, 2}] = {
-		{ 0, {0, 11, 1, 10}, {0, 11, 1, 10} },
-		{ 1, {2, 9, 3, 8, 4}, {2, 9, 3, 8, 4} },
-		{ 2, {7}, {7} },
-		{ 3, {5, 6}, {7} }, // crude approximation
+		{ 0, {0, 11, 1, 10}, {11, 10} },
+		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
+		{ 2, {4, 7}, {4, 7} },
+		{ 3, {5, 6}, {5} },
 	};
 
 	mapping[{"sector 45", 16, 3}] = {
-		{ 0, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
-		{ 10, {7, 8}, {7, 8} },
+		{ 0, {0, 11, 1, 10}, {11, 10} },
+		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
+		{ 2, {4, 7}, {4, 7} },
+		{ 3, {5, 6}, {5} },
 	};
 
 	mapping[{"sector 56", 116, 0}] = {
 		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
 		{ 1, {9, 3, 8, 4}, {9, 3, 8, 4} },
-		{ 2, {7, 5}, {7, 5} },
-		{ 3, {6}, {7, 5} }, // crude approximation
+		{ 2, {7, 5}, {7} },
+		{ 3, {6}, {7} },	// crude approximation
 	};
 
 	mapping[{"sector 56", 116, 1}] = {
-		{ 0, {0, 11, 1, 10, 2}, {0, 11, 1, 10, 2} },
-		{ 1, {9, 3, 8, 4}, {3, 8, 4} },
-		{ 2, {7, 5}, {7, 5} },
-		{ 3, {6}, {7, 5} }, // crude approximation
-	};
-
-	mapping[{"sector 56", 116, 2}] = {
 		{ 0, {0, 11, 1, 10}, {0, 11, 1, 10} },
 		{ 1, {2, 9, 3, 8, 4}, {2, 9, 3, 8, 4} },
 		{ 2, {7}, {7} },
+		{ 3, {5, 6}, {7} },	// crude approximation
+	};
+
+	mapping[{"sector 56", 116, 2}] = {
+		{ 0, {0, 11, 1, 10}, {0, 11, 10} },
+		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
+		{ 2, {4, 7}, {4, 7} },
 		{ 3, {5, 6}, {7} }, // crude approximation
 	};
 
 	mapping[{"sector 56", 116, 3}] = {
-		{ 0, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11}, {0, 1, 2, 3, 4, 5, 6, 9, 10, 11} },
-		{ 10, {7, 8}, {7, 8} },
+		{ 0, {0, 11, 1, 10}, {11, 10} },
+		{ 1, {2, 9, 3, 8}, {9, 3, 8} },
+		{ 2, {4, 7}, {4, 7} },
+		{ 3, {5, 6}, {7} }, // crude approximation
 	};
 
 	// collect results
@@ -244,8 +246,7 @@ int main()
 	// fit plots
 	for (auto &p : channelData)
 	{
-		//p.second.f_fit = new TF1("", "[0] + [1]*x");
-		p.second.f_fit = new TF1("", "[0]");
+		p.second.f_fit = new TF1("", "0 + (x>=6854 && x<6800)*([1]+[2]*x) + (x>=6800 && x<6980)*([3]+[4]*x) + (x>=6980 && x<7180)*([5]+[6]*x) + (x>=7180)*([7]+[8]*x)");
 		p.second.g_corr_vs_fill->Fit(p.second.f_fit, "Q");
 	}
 

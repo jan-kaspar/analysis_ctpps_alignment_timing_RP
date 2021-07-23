@@ -14,17 +14,11 @@ int channel = 3;
 real amp = 0.4;
 
 string dirs[] = {
-	//"data/phys/fill_6617/SingleMuon",
-	//"data/phys/fill_6617/ZeroBias",
-	//"data/phys/fill_6700/ZeroBias",
+	"data/version4/fill_6860/ALL",
+	"data/version4/fill_7045/ALL",
 
-	//"data/phys/fill_6860/SingleMuon",
-	"data/phys/fill_6860/ZeroBias",
-	"data/phys/fill_7045/ZeroBias",
-
-	//"data/phys/fill_7137/SingleMuon",
-	"data/phys/fill_7137/ZeroBias",
-	"data/phys/fill_7320/ZeroBias",
+	"data/version4/fill_7137/ALL",
+	"data/version4/fill_7320/ALL",
 };
 
 yTicksDef = RightTicks(0.5, 0.1);

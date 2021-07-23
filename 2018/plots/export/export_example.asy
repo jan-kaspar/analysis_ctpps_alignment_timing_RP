@@ -3,19 +3,11 @@ import pad_layout;
 
 string topDir = "../../";
 
-string datasets[];
-mark d_marks[];
-string dataDir = "data/version4/";
-datasets.push(dataDir+"fill_6617/ALL"); d_marks.push(mCi);
-datasets.push(dataDir+"fill_6729/ALL"); d_marks.push(mCi+false);
-datasets.push(dataDir+"fill_6923/ALL"); d_marks.push(mTU);
-datasets.push(dataDir+"fill_7039/ALL"); d_marks.push(mTU+false);
-datasets.push(dataDir+"fill_7137/ALL"); d_marks.push(mTD);
-datasets.push(dataDir+"fill_7315/ALL"); d_marks.push(mTD+false);
+string dataset = "data/version4/fill_7334/ALL"; real fill_number = 7334;
 
-string rp_sectors[], rp_labels[];
-rp_sectors.push("sector 45"); rp_labels.push("sector 45");
-rp_sectors.push("sector 56"); rp_labels.push("sector 56");
+string rps[], rp_sectors[], rp_labels[];
+rps.push("16"); rp_sectors.push("sector 45"); rp_labels.push("sector 45");
+rps.push("116"); rp_sectors.push("sector 56"); rp_labels.push("sector 56");
 
 int n_planes = 4;
 
@@ -25,7 +17,7 @@ real amp = 0.4;
 
 xSizeDef = 10cm;
 
-yTicksDef = RightTicks(1., 0.5);
+yTicksDef = RightTicks(0.2, 0.1);
 //yTicksDef = RightTicks(0.1, 0.05);
 
 pen p_pens[];
@@ -34,7 +26,7 @@ p_pens.push(blue);
 p_pens.push(heavygreen);
 p_pens.push(magenta);
 
-bool plot_fits = false;
+bool plot_fits = true;
 
 //----------------------------------------------------------------------------------------------------
 
@@ -86,57 +78,49 @@ for (int plane = 0; plane < n_planes; ++plane)
 
 		for (int ch = 0; ch < n_channels; ++ch)
 		{
-			for (int dsi : datasets.keys)
+			string f = topDir + dataset + "/distributions.root";
+
+			pen p = GetPen(plane, ch);
+
+			string obj_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", ch) + "/g_results";
+			RootObject obj = RootGetObject(f, obj_path, error=false);
+
+			if (obj.valid)
 			{
-				string f = topDir + datasets[dsi] + "/distributions.root";
-
-				string obj_path = rp_sectors[rpi] + "/residua/" + format("plane%u", plane) + format("/channel%u", ch) + "/g_results";
-				RootObject obj = RootGetObject(f, obj_path, error=false);
-				if (!obj.valid)
-					continue;
-
 				real ax[] = {0.};
 				real ay[] = {0.};
 
 				obj.vExec("GetPoint", 0, ax, ay); real corr = ay[0];
 				obj.vExec("GetPoint", 1, ax, ay); real corr_unc = ay[0];
 
-				if (corr_unc > 0.1)
-					continue;
+				if (corr_unc < 0.1)
+				{
+					real x = ch;
 
-				real x = ch;
-				if (datasets.length > 1)
-					x += - amp/2. + dsi * amp / (datasets.length-1);
-
-				pen p = GetPen(plane, ch);
-				draw((x, corr), d_marks[dsi]+2pt+p);
-				draw((x, corr-corr_unc)--(x, corr+corr_unc), p);
+					draw((x, corr), mCi+2pt+p);
+					draw((x, corr-corr_unc)--(x, corr+corr_unc), p);
+				}
 			}
 
 			if (plot_fits)
 			{
-				string f = topDir + "export/fits.root";
-				RootObject g_data = RootGetObject(f, rp_sectors[rpi] + format("_%u", plane) + format("_%u", ch));
+				string f = topDir + "export/fit_timing_alignments.root";
+				RootObject fit = RootGetObject(f, rps[rpi] + format("_%u", plane) + format("_%u", ch) + "#0");
 
-				real ax[] = {0.};
-				real ay[] = {0.};
+				real v = fit.rExec("Eval", fill_number);
 
-				g_data.vExec("GetPoint", 0, ax, ay);
-				real f = ax[0];
-
-				draw((ch-amp/2., f)--(ch+amp/2, f), black);
+				draw((ch-amp/2., v)--(ch+amp/2, v), p);
 			}
 		}
 
-		limits((-1, -2.0), (n_channels, +1.0), Crop);
+		limits((-1, -2), (n_channels, +1.0), Crop);
 	}
 }
 
 //----------------------------------------------------------------------------------------------------
 
 NewPad(false);
-for (int dsi : datasets.keys)
-	AddToLegend(replace(datasets[dsi], "_", "\_"), d_marks[dsi]+2pt);
+AddToLegend(replace(dataset, "_", "\_"), mCi+2pt);
 for (int pi : p_pens.keys)
 	AddToLegend(format("diamond/piece %u", pi), p_pens[pi]);
 

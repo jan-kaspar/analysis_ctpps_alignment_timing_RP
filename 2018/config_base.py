@@ -5,7 +5,7 @@ config = cms.PSet(
     xangle = cms.uint32(0),
     dataset = cms.string(""),
 
-    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/fit_alignments_2019_05_09.1.out"),
+    alignment_files = cms.vstring("/afs/cern.ch/work/j/jkaspar/work/software/ctpps/development/ctpps_initial_proton_reconstruction_CMSSW_10_2_0/CMSSW_10_2_0/src/RecoCTPPS/ProtonReconstruction/data/alignment/2018/fit_alignments_2019_07_11.out"),
 
     alignment_corrections = cms.PSet(
       rp_L_2_F = cms.PSet(
@@ -47,7 +47,7 @@ config = cms.PSet(
 	  cut_v_apply = cms.bool(True),
 	  cut_v_a = cms.double(-1.07),
 	  cut_v_c = cms.double(0.),
-	  cut_v_si = cms.double(0.15)
+	  cut_v_si = cms.double(0.25)
     ),
 
 )

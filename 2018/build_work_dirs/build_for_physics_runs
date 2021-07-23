@@ -24,12 +24,13 @@ function BuildOne()
 		tag=${tag#*_}
 		stream=${tag%%_*}
 
-		if [ "$stream" != "SingleMuon" ]
-		then
-			continue
-		fi
+		#if [ "$stream" != "SingleMuon" ]
+		#then
+		#	continue
+		#fi
 
-		tag="$fill,$stream"
+		#tag="$fill,$stream"
+		tag="$fill,ALL"
 
 		buffer="$buffer $tag"
 	done
@@ -53,7 +54,8 @@ function BuildOne()
 			echo ""
 			echo "input_files = cms.vstring("
 
-			for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep "_${stream}" | grep ".root"`
+			#for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep "_${stream}" | grep ".root"`
+			for f in `eos ls "$eos_dir" | grep "fill${fill}_" | grep ".root"`
 			do
 				echo "    \"root://eostotem.cern.ch/${eos_dir}/${f}\","
 			done
@@ -75,4 +77,6 @@ function BuildOne()
 
 #BuildOne "../data/version2" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/timing-version2"
 
-BuildOne "../data/version3" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/rec-hit-version1"
+#BuildOne "../data/version3" "/eos/totem/data/ctpps/reconstruction/2018/physics_runs/rec-hit-version1"
+
+BuildOne "../data/version4" "/eos/cms/store/group/phys_pps/reconstruction/2018/physics_runs/rec-hit-version1"
